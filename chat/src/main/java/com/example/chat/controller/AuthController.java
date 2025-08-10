@@ -69,6 +69,11 @@ public class AuthController {
         return ResponseEntity.ok(convertToUserDTO(user));
     }
 
+    @GetMapping("/online-users")
+    public ResponseEntity<?> getOnlineUsers(){
+        return ResponseEntity.ok(authenticationService.getOnlineUsers());
+    }
+
     private UserDTO convertToUserDTO(User user) {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());
