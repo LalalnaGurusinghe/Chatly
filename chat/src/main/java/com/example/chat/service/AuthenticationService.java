@@ -8,10 +8,16 @@ import com.example.chat.jwt.JwtService;
 import com.example.chat.model.User;
 import com.example.chat.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class AuthenticationService {
@@ -56,6 +62,25 @@ public class AuthenticationService {
                 .userDTO(convertToUserDTO(user))
                 .build();
     }
+
+     public ResponseEntity<String> logout(){
+         ResponseCookie responseCookie = ResponseCookie.from("JWT", "")
+                 .httpOnly(true)
+                 .secure(true)
+                 .path("/")
+                 .maxAge(0) // Set max age to 0 to delete the cookie
+                 .sameSite("Strict")
+                 .build();
+
+         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                 .body("Logged out successfully");
+     }
+
+    public Map<String , Object> getOnlineUsers(){
+        List<User> onlineUsers = userRepo.findAllByOnline(true);
+        return Map.of("onlineUsers", onlineUsers.stream().map(this::convertToUserDTO).toList());
+    }
+
 
     private UserDTO convertToUserDTO(User user) {
         UserDTO userDTO = new UserDTO();

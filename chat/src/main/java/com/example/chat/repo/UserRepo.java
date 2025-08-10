@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepo extends JpaRepository<User, Long> {
@@ -19,4 +20,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
    public void updateUserOnlineStatus(@Param("username") String username, @Param("isOnline") boolean isOnline);
 
 
+    List<User> findAllByOnline(boolean b);
 }
