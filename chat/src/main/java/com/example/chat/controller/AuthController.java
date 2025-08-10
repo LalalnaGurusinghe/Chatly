@@ -74,6 +74,7 @@ public class AuthController {
         userDTO.setId(user.getId());
         userDTO.setUsername(user.getUsername());
         userDTO.setEmail(user.getEmail());
+        userDTO.setIsOnline(user.getIsOnline());
 
         return userDTO;
 

@@ -29,6 +29,7 @@ public class WebSocketListener {
         logger.info("Connected to websocket");
     }
 
+    @EventListener
     public void handleWebsocketDisconnectListener(SessionDisconnectEvent event){
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String username = headerAccessor.getSessionAttributes().get("username").toString();

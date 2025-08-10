@@ -77,7 +77,7 @@ public class AuthenticationService {
      }
 
     public Map<String , Object> getOnlineUsers(){
-        List<User> onlineUsers = userRepo.findAllByOnline(true);
+        List<User> onlineUsers = userRepo.findAllByIsOnline(true);
         return Map.of("onlineUsers", onlineUsers.stream().map(this::convertToUserDTO).toList());
     }
 
@@ -87,6 +87,7 @@ public class AuthenticationService {
         userDTO.setId(user.getId());
         userDTO.setUsername(user.getUsername());
         userDTO.setEmail(user.getEmail());
+        userDTO.setIsOnline(user.getIsOnline());
 
         return userDTO;
 

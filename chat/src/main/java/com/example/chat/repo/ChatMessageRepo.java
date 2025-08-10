@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepo extends JpaRepository<ChatMessage, Long> {
 
-    @Query("SELECT cm FROM ChatMessage cm WHERE cm.type = 'PRIVATE_MESSAGE' AND ((cm.sender = :user1 AND cm.receiver = :user2) OR (cm.sender = :user2 AND cm.receiver = :user1)) ORDER BY cm.timestamp ASC")
+    @Query("SELECT cm FROM ChatMessage cm WHERE cm.messageType = 'PRIVATE_MESSAGE' AND ((cm.sender = :user1 AND cm.receiver = :user2) OR (cm.sender = :user2 AND cm.receiver = :user1)) ORDER BY cm.timestamp ASC")
     List<ChatMessage> findPrivateMessagesBetweenTwoUsers(@Param("user1") String user1, @Param("user2") String user2);
 
 

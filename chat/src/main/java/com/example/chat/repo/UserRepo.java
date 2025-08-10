@@ -20,5 +20,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
    public void updateUserOnlineStatus(@Param("username") String username, @Param("isOnline") boolean isOnline);
 
 
-    List<User> findAllByOnline(boolean b);
+    List<User> findAllByIsOnline(boolean isOnline);
 }
