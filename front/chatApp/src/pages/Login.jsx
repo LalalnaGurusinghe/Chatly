@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../service/authServices";
+import "../styles/Auth.css";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -15,7 +16,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const result = await authService.Login(username, password);
+      const result = await authService.login(username, password);
       if (result.success) {
         setMessage("Login successfully.");
         setTimeout(() => {
@@ -77,7 +78,9 @@ const Login = () => {
               style={{
                 color: message.includes("successfully") ? "#4CaF50" : "#ff6b6b",
               }}
-            ></p>
+            >
+              {message}
+            </p>
           )}
         </form>
       </div>

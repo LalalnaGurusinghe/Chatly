@@ -1,13 +1,13 @@
-import { Children } from "react";
+import { Navigate } from "react-router-dom";
 import { authService } from "../service/authServices";
 
-const ProtectedRoute = ({Children})=>{
-    const isAuthenticated = authService.isAuthenticated();
+const ProtectedRoute = ({ children }) => {
+    const authStatus = authService.checkAuthStatus();
 
-    if(!isAuthenticated){
-        return <Navigate to="/login" replace/>
+    if (!authStatus.isAuthenticated) {
+        return <Navigate to="/login" replace />
     }
-    return Children;
+    return children;
 }
 
 export default ProtectedRoute;

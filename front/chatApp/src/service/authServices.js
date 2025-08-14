@@ -1,6 +1,4 @@
 import axios from "axios";
-import Signup from "../pages/Signup";
-
 const API_URL = "http://localhost:8080";
 
 const api = axios.create({
@@ -11,7 +9,21 @@ const api = axios.create({
   withCredentials: true,
 });
 
-//Response interceptor for global error handeling
+// Request interceptor to add JWT token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    if (currentUser.token) {
+      config.headers.Authorization = `Bearer ${currentUser.token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+//Response interceptor for global error handling
 
 api.interceptors.response.use(
   (response) => response,
@@ -19,6 +31,8 @@ api.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
+          // Clear invalid token and redirect to login
+          console.log("Token expired or invalid, redirecting to login");
           authService.logout();
           window.location.href = "/login";
           break;
@@ -83,7 +97,7 @@ export const authService = {
     }
   },
 
-  Signup: async (username, email, password) => {
+  signup: async (username, email, password) => {
     try {
       const response = await api.post("/auth/signup", {
         username,
@@ -116,10 +130,13 @@ export const authService = {
   fetchCurrentUser: async () => {
     try {
       const response = await api.get("/auth/current-user");
-      localStorage.setItem("currentUser", JSON.stringify(response.data));
+      // Merge the response with existing user data to preserve token
+      const existingUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      const updatedUser = { ...existingUser, ...response.data };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
       return {
         success: true,
-        user: response.data,
+        user: updatedUser,
       };
     } catch (error) {
       console.error("Error fetching current user:", error);
@@ -134,7 +151,51 @@ export const authService = {
 
   isAuthenticated: () => {
     const user = localStorage.getItem("currentUser");
-    return user ? true : false;
+    if (!user) return false;
+    
+    try {
+      const userData = JSON.parse(user);
+      return userData && userData.token;
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      return false;
+    }
+  },
+
+  // Check if token is still valid
+  isTokenValid: () => {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return false;
+    
+    try {
+      const userData = JSON.parse(user);
+      if (!userData || !userData.token) return false;
+      
+      // You can add JWT token validation logic here if needed
+      // For now, we'll just check if token exists
+      return true;
+    } catch (error) {
+      console.error("Error checking token validity:", error);
+      return false;
+    }
+  },
+
+  // Check if user needs to be redirected to login
+  checkAuthStatus: () => {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return { isAuthenticated: false, needsRedirect: true };
+    
+    try {
+      const userData = JSON.parse(user);
+      if (!userData || !userData.token) {
+        return { isAuthenticated: false, needsRedirect: true };
+      }
+      
+      return { isAuthenticated: true, needsRedirect: false };
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      return { isAuthenticated: false, needsRedirect: true };
+    }
   },
 
   fetchPrivateMessages: async (user1, user2) => {
@@ -160,6 +221,31 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching online users:", error);
+      // Return empty array instead of throwing error to prevent app crash
+      return [];
+    }
+  },
+
+  // Refresh user data and token if needed
+  refreshUserData: async () => {
+    try {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser || !currentUser.token) {
+        throw new Error("No valid user data found");
+      }
+      
+      const response = await api.get("/auth/current-user");
+      const updatedUser = { ...currentUser, ...response.data };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      
+      return {
+        success: true,
+        user: updatedUser,
+      };
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      // If refresh fails, clear user data and redirect to login
+      authService.logout();
       throw error;
     }
   },

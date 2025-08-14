@@ -16,12 +16,13 @@ public class ChatMessage {
     private String content;
     private String sender;
     private String receiver;
+    private String color;
     @Column(nullable = false)
     private LocalDateTime timestamp;
     @Enumerated(EnumType.STRING)
     private MessageType messageType;
 
     public enum MessageType {
-        CHAT,PRIVATE_MESSAGE,JOIN,LEAVE,TYPING
+        CHAT, PRIVATE_MESSAGE, JOIN, LEAVE, TYPING
     }
 }

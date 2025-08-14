@@ -27,11 +27,11 @@ public class ChatController {
         this.chatMessageRepo = chatMessageRepo;
     }
 
-    @MessageMapping("/chat.addUser")//websocket destination for adding a user
-    @SendTo("/topic/public")// This will broadcast the message to all subscribers of /topic/public {channel}
+    @MessageMapping("/chat.adduser") // websocket destination for adding a user
+    @SendTo("/topic/group") // This will broadcast the message to all subscribers of /topic/group {channel}
     public ChatMessage addUser(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headAccessor) {
         if (userService.userExists(chatMessage.getSender())) {
-            //store user in session
+            // store user in session
             headAccessor.getSessionAttributes().put("username", chatMessage.getSender());
             userService.setUserOnlineStatus(chatMessage.getSender(), true);
 
@@ -39,19 +39,18 @@ public class ChatController {
                     + " with Session ID: " + headAccessor.getSessionId());
 
             chatMessage.setTimestamp(LocalDateTime.now());
+            chatMessage.setMessageType(ChatMessage.MessageType.JOIN);
             if (chatMessage.getContent() == null || chatMessage.getContent().isEmpty()) {
                 chatMessage.setContent(" ");
             }
 
             return chatMessageRepo.save(chatMessage);
-
         }
-
         return null;
     }
 
-    @MessageMapping("/chat.sendMessage")
-    @SendTo("/topic/public")
+    @MessageMapping("/chat.send") // websocket destination for sending a message
+    @SendTo("/topic/group")
     public ChatMessage sendMessage(@Payload ChatMessage chatMessage) {
         if (userService.userExists(chatMessage.getSender())) {
             if (chatMessage.getTimestamp() == null) {
@@ -60,12 +59,24 @@ public class ChatController {
             if (chatMessage.getContent() == null) {
                 chatMessage.setContent(" ");
             }
+            chatMessage.setMessageType(ChatMessage.MessageType.CHAT);
             return chatMessageRepo.save(chatMessage);
         }
         return null;
     }
 
-    @MessageMapping("/chat.sendPrivateMessage")
+    @MessageMapping("/chat.typing")
+    @SendTo("/topic/group")
+    public ChatMessage handleTyping(@Payload ChatMessage chatMessage) {
+        if (userService.userExists(chatMessage.getSender())) {
+            chatMessage.setTimestamp(LocalDateTime.now());
+            chatMessage.setMessageType(ChatMessage.MessageType.TYPING);
+            return chatMessage;
+        }
+        return null;
+    }
+
+    @MessageMapping("/chat.private")
     public void sendPrivateMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
         if (userService.userExists(chatMessage.getSender()) && userService.userExists(chatMessage.getReceiver())) {
             if (chatMessage.getTimestamp() == null) {
@@ -78,27 +89,27 @@ public class ChatController {
             chatMessage.setMessageType(ChatMessage.MessageType.PRIVATE_MESSAGE);
 
             ChatMessage savedMessage = chatMessageRepo.save(chatMessage);
-            System.out.println("Message save successfully with id "+ savedMessage.getId());
+            System.out.println("Message save successfully with id " + savedMessage.getId());
 
-            try{
+            try {
                 // Send the private message to the specific user
                 String recepientDestination = "/user/" + chatMessage.getReceiver() + "/queue/private";
-                System.out.println("Sending private message to: " + recepientDestination + " for user: " + chatMessage.getReceiver()
+                System.out.println("Sending private message to: " + recepientDestination + " for user: "
+                        + chatMessage.getReceiver()
                         + " with content: " + chatMessage.getContent());
                 messagingTemplate.convertAndSend(recepientDestination, savedMessage);
 
-
                 String senderDestination = "/user/" + chatMessage.getSender() + "/queue/private";
-                System.out.println("Sending private message to: " + senderDestination + " for user: " + chatMessage.getSender()
-                        + " with content: " + chatMessage.getContent());
+                System.out.println(
+                        "Sending private message to: " + senderDestination + " for user: " + chatMessage.getSender()
+                                + " with content: " + chatMessage.getContent());
                 messagingTemplate.convertAndSend(senderDestination, savedMessage);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 System.err.println("Error sending private message: " + e.getMessage());
             }
-        }
-        else{
-            System.err.println("Error: User does not exist or is offline. Sender: " + chatMessage.getSender() + ", Receiver: " + chatMessage.getReceiver());
+        } else {
+            System.err.println("Error: User does not exist or is offline. Sender: " + chatMessage.getSender()
+                    + ", Receiver: " + chatMessage.getReceiver());
         }
     }
 }

@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {authService} from "../service/authServices";
+import "../styles/Navbar.css";
 
 
 const Navbar = ()=>{
@@ -33,7 +34,7 @@ const Navbar = ()=>{
                     <>
                       <Link to="/chatarea" className="navbar-link">Chat Area</Link>
                       <div className="navbar-user">
-                        <span className="usser-info">
+                        <span className="user-info">
                             Welcome , {currentUser.username}
                         </span>
                         <button className="logout-btn" onClick={handleLogout}>

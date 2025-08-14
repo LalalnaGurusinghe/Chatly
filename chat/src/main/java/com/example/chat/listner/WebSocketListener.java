@@ -25,20 +25,26 @@ public class WebSocketListener {
     }
 
     @EventListener
-    public void handleWebsocketConnectListener(SessionConnectedEvent event){
+    public void handleWebsocketConnectListener(SessionConnectedEvent event) {
         logger.info("Connected to websocket");
     }
 
     @EventListener
-    public void handleWebsocketDisconnectListener(SessionDisconnectEvent event){
+    public void handleWebsocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = headerAccessor.getSessionAttributes().get("username").toString();
+        String username = (String) headerAccessor.getSessionAttributes().get("username");
 
-        System.out.println("User disconnected: " + username + " with Session ID: " + headerAccessor.getSessionId());
-        userService.setUserOnlineStatus(username,false);
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setMessageType(ChatMessage.MessageType.LEAVE);
-        chatMessage.setSender(username);
-        messagingTemplate.convertAndSend("/topic/public",chatMessage);
+        if (username != null) {
+            System.out.println("User disconnected: " + username + " with Session ID: " + headerAccessor.getSessionId());
+            userService.setUserOnlineStatus(username, false);
+
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setMessageType(ChatMessage.MessageType.LEAVE);
+            chatMessage.setSender(username);
+            chatMessage.setContent(" ");
+            chatMessage.setTimestamp(java.time.LocalDateTime.now());
+
+            messagingTemplate.convertAndSend("/topic/group", chatMessage);
+        }
     }
 }
